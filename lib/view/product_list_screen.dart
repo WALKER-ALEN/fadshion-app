@@ -1,7 +1,7 @@
 import 'package:fashn_app/view/product_detail_screen.dart';
 import 'package:fashn_app/view/widgets/constants.dart';
 import 'package:fashn_app/viewmodel/product_list_notifier.dart';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ionicons/ionicons.dart';
@@ -16,12 +16,14 @@ const List<String> categories = [
 ];
 
 class ProductListScreen extends ConsumerWidget {
+  const ProductListScreen({super.key});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final TextEditingController _searchController = TextEditingController();
-    final ScrollController _scrollController = ScrollController();
+    final TextEditingController searchController = TextEditingController();
+    final ScrollController scrollController = ScrollController();
     final productsAsyncValue = ref.watch(productListProvider);
-    final FocusNode _focusNode = FocusNode();
+    final FocusNode focusNode = FocusNode();
 
     final selectedCategory = ref.watch(selectedCategoryProvider);
 
@@ -48,24 +50,22 @@ class ProductListScreen extends ConsumerWidget {
       error: (error, stack) => [],
     );
 
-    // void initState() {
+    Future<void> onRefresh() async {
+      // Logic to refresh the product list. This will trigger a new fetch of the product list.
+      await ref.refresh(productListProvider);
+    }
 
-    //   _scrollController.addListener(() {
-
-    //   });
-    // }
-
-    void _focusSearchBar() {
-      if (_scrollController.hasClients) {
-        _scrollController
+    void focusSearchBar() {
+      if (scrollController.hasClients) {
+        scrollController
             .animateTo(
           150.0,
-          duration: Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         )
             .then((_) {
-          Future.delayed(Duration(milliseconds: 300), () {
-            FocusScope.of(context).requestFocus(_focusNode);
+          Future.delayed(const Duration(milliseconds: 300), () {
+            FocusScope.of(context).requestFocus(focusNode);
           });
         });
       } else {
@@ -75,230 +75,255 @@ class ProductListScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.primaryBackground,
-      body: CustomScrollView(
-        controller: _scrollController,
-        physics: BouncingScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-            centerTitle: true,
-            titleSpacing: 30,
-            title: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                'FLiCshoP',
-                style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    fontStyle: FontStyle.italic),
-              ),
-            ),
-            pinned: true,
-            expandedHeight: 200.0,
-            flexibleSpace: Padding(
-              padding: const EdgeInsets.only(
-                  top: 20, bottom: 40, left: 10, right: 10),
-              child: FlexibleSpaceBar(
-                collapseMode: CollapseMode.parallax,
-                title: Container(
-                  margin: EdgeInsets.symmetric(horizontal: 10.0),
-                  child: TextField(
-                    focusNode: _focusNode,
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintTextDirection: TextDirection.ltr,
-                      hintText: 'Search...',
-                      filled: true,
-                      fillColor: AppColors.SearchBarColor,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
-                    ),
-                    autofocus: false, // Disable autofocus initially
-                  ),
+      body: RefreshIndicator(
+        onRefresh: onRefresh,
+        child: CustomScrollView(
+          controller: scrollController,
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25)),
+              centerTitle: true,
+              titleSpacing: 30,
+              title: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'FLiCshoP',
+                  // style: TextStyle(
+                  //     fontSize: 25,
+                  //     fontWeight: FontWeight.bold,
+                  //     fontStyle: FontStyle.italic),
+                  style: AppFonts.bold(),
                 ),
-                titlePadding: EdgeInsets.all(0),
               ),
-            ),
-            backgroundColor: AppColors.appBarColor,
-
-            // title: Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: Text(
-            //     'CATELOG',
-            //     style: TextStyle(fontSize: 25),
-            //   ),
-            // ),
-            // pinned: true,
-            // floating: true,
-            // actions: [
-            //   Padding(
-            //     padding: const EdgeInsets.only(left: 8),
-            //     child: IconButton(
-            //         icon: Icon(
-            //           Icons.favorite_border_outlined,
-            //           size: 28,
-            //           color: Colors.redAccent,
-            //         ),
-            //         onPressed: () {}),
-            //   ),
-            //   Padding(
-            //     padding: const EdgeInsets.only(right: 8),
-            //     child: IconButton(
-            //         icon: Icon(
-            //           Ionicons.notifications_outline,
-            //           size: 28,
-            //         ),
-            //         onPressed: () {}),
-            //   ),
-            // ],
-            // expandedHeight: 150.0,
-          ),
-          SliverToBoxAdapter(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    '${totalProducts} results',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+              pinned: true,
+              expandedHeight: 200.0,
+              flexibleSpace: Padding(
+                padding: const EdgeInsets.only(
+                    top: 20, bottom: 40, left: 10, right: 10),
+                child: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.parallax,
+                  title: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: TextField(
+                      focusNode: focusNode,
+                      controller: searchController,
+                      decoration: InputDecoration(
+                        hintStyle: AppFonts.regular(),
+                        hintTextDirection: TextDirection.ltr,
+                        hintText: 'Search...',
+                        filled: true,
+                        fillColor: AppColors.SearchBarColor,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                          borderSide: BorderSide.none,
                         ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      DropdownButton<String>(
-                        value: selectedCategory,
-                        hint: Text('Select a category'),
-                        onChanged: onCategoryChanged,
-                        items: categories.map((String category) {
-                          return DropdownMenuItem(
-                              child: Text(category), value: category);
-                        }).toList(),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 16.0),
                       ),
-                      IconButton(
-                          onPressed: () {}, icon: Icon(Icons.filter_list)),
-                      IconButton(
-                          onPressed: () {
-                            _focusSearchBar();
-                          },
-                          icon: Icon(Ionicons.search))
-                    ],
+                      autofocus: false, // Disable autofocus initially
+                    ),
                   ),
-                )
-              ],
+                  titlePadding: const EdgeInsets.all(0),
+                ),
+              ),
+              backgroundColor: AppColors.appBarColor,
             ),
-          ),
-          filteredProducts.isNotEmpty
-              ? SliverGrid(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final product = filteredProducts[index];
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                        color: AppColors.GridCardColor,
-                        margin: EdgeInsets.all(10.0),
-                        child: InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => ProductDetailScreen(
-                                      productId: product.id)),
-                            );
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(15),
-                                    child: Image.network(
-                                      product.image,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
+            SliverToBoxAdapter(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text('$totalProducts results',
+                        style: AppFonts.bold(fontSize: 20)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        DropdownButton<String>(
+                          value: selectedCategory,
+                          hint: const Text('Select a category'),
+                          onChanged: onCategoryChanged,
+                          items: categories.map((String category) {
+                            return DropdownMenuItem(
+                                value: category, child: Text(category));
+                          }).toList(),
+                        ),
+                        IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.filter_list)),
+                        IconButton(
+                            onPressed: () {
+                              focusSearchBar();
+                            },
+                            icon: const Icon(Ionicons.search))
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
+            filteredProducts.isNotEmpty
+                ? SliverGrid(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final product = filteredProducts[index];
+                        return Card(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          color: AppColors.GridCardColor,
+                          margin: const EdgeInsets.all(10.0),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => ProductDetailScreen(
+                                        productId: product.id)),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(15),
+                                      child: Image.network(
+                                        product.image,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  product.title,
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.GridCardTextColor),
-                                  overflow: TextOverflow.ellipsis,
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    product.title,
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.GridCardTextColor),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Text(
-                                  '\$${product.price}',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.GridCardTextColor),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(
+                                    '\$${product.price}',
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.GridCardTextColor),
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '${product.rating.rate} (${product.rating.count} reviews)',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.GridCardTextColor),
-                                    ),
-                                    IconButton(
-                                        onPressed: () {},
-                                        icon: Icon(
-                                          Icons.favorite,
-                                          color: AppColors.GridCardTextColor,
-                                        ))
-                                  ],
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${product.rating.rate} (${product.rating.count} reviews)',
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.GridCardTextColor),
+                                      ),
+                                      IconButton(
+                                          onPressed: () {},
+                                          icon: const Icon(
+                                            Icons.favorite,
+                                            color: AppColors.GridCardTextColor,
+                                          ))
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    childCount: filteredProducts.length,
+                        );
+                      },
+                      childCount: filteredProducts.length,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                      childAspectRatio: 0.75,
+                    ),
+                  )
+                : const SliverFillRemaining(
+                    child: Center(child: Text('No products found')),
                   ),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
-                    childAspectRatio: 0.75,
-                  ),
-                )
-              : SliverFillRemaining(
-                  child: Center(child: Text('No products found')),
-                ),
-          SliverToBoxAdapter(
-            child: Container(
-              color: Colors.blueGrey[100],
-              padding: EdgeInsets.all(16.0),
-              child: Text('Additional Content Here'),
+            SliverToBoxAdapter(
+              child: Container(
+                color: Colors.blueGrey[100],
+                padding: const EdgeInsets.all(16.0),
+                child: const Center(child: Text('...T&C Apply...')),
+              ),
             ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        elevation: 10,
+        color: AppColors.GridCardColor,
+        padding: EdgeInsetsDirectional.zero,
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 2,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.home_filled,
+                  color: AppColors.GridCardTextColor,
+                )),
+            IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.explore,
+                  color: AppColors.GridCardTextColor,
+                )),
+            const SizedBox(
+              width: 20,
+            ),
+            IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  Ionicons.cart,
+                  color: AppColors.GridCardTextColor,
+                )),
+            IconButton(
+                onPressed: () {},
+                icon: const Icon(
+                  Icons.account_circle,
+                  color: AppColors.GridCardTextColor,
+                )),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: AppColors.GridCardColor,
+        elevation: 10,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+        onPressed: () {},
+        child: Text(
+          'F',
+          style: AppFonts.italic(
+            color: AppColors.GridCardTextColor,
+            fontSize: 30,
           ),
-        ],
+        ),
       ),
     );
   }
